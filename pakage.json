@@ -1,0 +1,8 @@
+{
+  "name": "aroz-website",
+  "version": "1.0.0",
+  "description": "A platform to earn money by completing tasks",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.0"
+  }
+}
