@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Aroz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo"><i class="fas fa-rocket"></i>Aroz</a>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li class="how-it-works-container">
+                <a class="how-it-works-link">How It Works</a>
+                <div class="how-it-works-dropdown">
+                    <h4>Start Earning in 3 Simple Steps</h4>
+                    <p><strong>1. Sign Up & Browse:</strong> Create your free account and explore available simple tasks.</p>
+                    <p><strong>2. Complete Tasks:</strong> Choose a task you like, such as:</p>
+                    <ul style="color: #64748b; margin-left: 1.5rem; margin-bottom: 1rem;">
+                        <li>Taking quick surveys</li>
+                        <li>Watching short videos</li>
+                        <li>Testing new apps</li>
+                        <li>Simple data entry</li>
+                    </ul>
+                    <p><strong>3. Get Paid:</strong> Earn money for each completed task. Withdraw your earnings easily to your bank account, PayPal, or other methods.</p>
+                </div>
+            </li>
+            <li class="support-container">
+                <a class="support-link">Support</a>
+                <div class="dropdown-content">
+                    <p>Email us at:</p>
+                    <a href="mailto:taskkaropaisakamao@gmail.com">taskkaropaisakamao@gmail.com</a>
+                </div>
+            </li>
+        </ul>
+        <a href="login.html" class="nav-cta">Login</a>
+    </nav>
+
+    <main>
+        <div class="form-container">
+            <h1>Create Your Account</h1>
+            <!-- Added novalidate to disable browser popup -->
+            <form id="signupForm" novalidate>
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                    <p class="error-message" id="emailError">This email is already registered.</p>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                    <p class="error-message" id="passwordError">Passwords do not match.</p>
+                </div>
+                <button type="submit" class="form-submit-btn">Sign Up</button>
+            </form>
+            <div class="form-footer">
+                <p>Already have an account? <a href="login.html">Log In</a></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Loader and Success Overlay -->
+    <div class="loader-overlay" id="loaderOverlay">
+        <div class="loader" id="loader"></div>
+        <div class="loader-success" id="successCheckmark">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
+    </div>
+
+<script>
+    // Function to validate email format (must contain @)
+    function isValidEmail(email) {
+        const emailRegex = /.+@.+\..+/; // Basic regex to check for @ and a dot
+        return emailRegex.test(email);
+    }
+
+    // Handle Form Submission - UPDATED TO USE NETLIFY FUNCTION
+    document.getElementById('signupForm').addEventListener('submit', async function(event) {
+        event.preventDefault(); // Stop the form from reloading the page
+
+        // Get input elements and their values
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+
+        const firstName = firstNameInput.value.trim();
+        const lastName = lastNameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        // Reset all error states first
+        const allInputs = [firstNameInput, lastNameInput, emailInput, passwordInput, confirmPasswordInput];
+        allInputs.forEach(input => {
+            input.parentElement.classList.remove('error');
+        });
+        document.getElementById('emailError').style.display = 'none';
+        document.getElementById('passwordError').style.display = 'none';
+
+        let isValid = true;
+
+        // --- VALIDATION 1: Check if any field is empty --- //
+        if (!firstName) {
+            firstNameInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+        if (!lastName) {
+            lastNameInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+        if (!email) {
+            emailInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+        if (!password) {
+            passwordInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+        if (!confirmPassword) {
+            confirmPasswordInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+
+        // If any field is empty, stop here.
+        if (!isValid) {
+            return;
+        }
+
+        // --- VALIDATION 2: Check for more complex errors --- //
+
+        // Check if email is valid (contains @ and .)
+        if (!isValidEmail(email)) {
+            document.getElementById('emailError').style.display = 'block';
+            document.getElementById('emailError').textContent = 'Please enter a valid email address (e.g., user@gmail.com).';
+            emailInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+
+        // Check if password is at least 6 characters
+        if (password.length < 6) {
+            document.getElementById('passwordError').style.display = 'block';
+            document.getElementById('passwordError').textContent = 'Password must be at least 6 characters long.';
+            passwordInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+        // Check if passwords match (only if password is long enough)
+        else if (password !== confirmPassword) {
+            document.getElementById('passwordError').style.display = 'block';
+            document.getElementById('passwordError').textContent = 'Passwords do not match.';
+            confirmPasswordInput.parentElement.classList.add('error');
+            isValid = false;
+        }
+
+        // If ANY validation fails, stop here.
+        if (!isValid) {
+            return;
+        }
+
+        // --- VALIDATION PASSED - NOW USE NETLIFY FUNCTION --- //
+        // Show the loader overlay and spinning animation
+        const overlay = document.getElementById('loaderOverlay');
+        const loader = document.getElementById('loader');
+        const successCheck = document.getElementById('successCheckmark');
+
+        overlay.style.display = 'flex';
+        loader.style.display = 'block';
+
+        try {
+            // Send signup data to Netlify Function
+            const response = await fetch('/.netlify/functions/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    password: password
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                // Handle error from Netlify function
+                throw new Error(result.error);
+            }
+
+            // Success! Show checkmark and redirect
+            loader.style.display = 'none';
+            successCheck.style.display = 'block';
+
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+
+        } catch (error) {
+            // Hide loader on error
+            overlay.style.display = 'none';
+            
+            // Show error message
+            if (error.message.includes('already exists')) {
+                document.getElementById('emailError').style.display = 'block';
+                document.getElementById('emailError').textContent = 'This email is already registered.';
+                emailInput.parentElement.classList.add('error');
+            } else {
+                alert('Error: ' + error.message);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
