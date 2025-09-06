@@ -17,8 +17,9 @@
                 <button class="user-menu-btn" id="userMenuBtn">
                     <img src="https://www.pngkey.com/png/full/72-729716_user-avatar-png-graphic-free-download-icon.png" alt="User" class="user-avatar">
                     <span id="userGreeting">Hi User!</span>
+                    <i class="fas fa-chevron-down" style="margin-left: 8px; font-size: 12px;"></i>
                 </button>
-                <div class="user-dropdown-content">
+                <div class="user-dropdown-content" id="userDropdown">
                     <div class="user-info">
                         <img src="https://www.pngkey.com/png/full/72-729716_user-avatar-png-graphic-free-download-icon.png" alt="User" class="user-avatar">
                         <div>
@@ -27,17 +28,17 @@
                         </div>
                     </div>
                     <hr>
-                    <a href="#personal-info" class="dropdown-link" onclick="showSection('personal-info')">
+                    <a href="#personal-info" class="dropdown-link" onclick="showSection('personal-info'); hideDropdown()">
                         <i class="fas fa-user"></i> Personal Information
                     </a>
-                    <a href="#earnings" class="dropdown-link" onclick="showSection('earnings')">
+                    <a href="#earnings" class="dropdown-link" onclick="showSection('earnings'); hideDropdown()">
                         <i class="fas fa-money-bill-wave"></i> Earnings
                     </a>
-                    <a href="#task-history" class="dropdown-link" onclick="showSection('task-history')">
+                    <a href="#task-history" class="dropdown-link" onclick="showSection('task-history'); hideDropdown()">
                         <i class="fas fa-history"></i> Task History
                     </a>
                     <hr>
-                    <a href="#" class="dropdown-link" onclick="logout()">
+                    <a href="#" class="dropdown-link" onclick="logout(); hideDropdown()">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </a>
                 </div>
@@ -231,7 +232,9 @@
         // Load user data into dashboard
         function loadUserData() {
             const userData = JSON.parse(localStorage.getItem('loggedInUser'));
-            if (userData) {
+            console.log("User data from localStorage:", userData); // Debug log
+            
+            if (userData && userData.firstName) {
                 // Update all user information displays
                 document.getElementById('userGreeting').textContent = 'Hi ' + userData.firstName + '!';
                 document.getElementById('dropdownUserName').textContent = userData.firstName + ' ' + userData.lastName;
@@ -253,6 +256,12 @@
                 // Generate personalized referral link
                 document.getElementById('referralLinkInput').value = 
                     'https://aroz.com/signup?ref=' + userData.firstName + userData.lastName.substring(0, 3);
+            } else {
+                console.error("No user data found in localStorage or firstName is missing");
+                // Set default values if no user data
+                document.getElementById('userGreeting').textContent = 'Hi User!';
+                document.getElementById('dropdownUserName').textContent = 'User Name';
+                document.getElementById('dropdownUserEmail').textContent = 'user@example.com';
             }
         }
 
@@ -278,6 +287,17 @@
             }
         }
 
+        // Show/hide user dropdown
+        function toggleDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function hideDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.remove('show');
+        }
+
         // Copy referral link function
         function copyReferralLink() {
             const linkInput = document.getElementById('referralLinkInput');
@@ -286,21 +306,27 @@
             alert('Referral link copied to clipboard!');
         }
 
+        // Close dropdown when clicking outside
+        function setupDropdownClose() {
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('userDropdown');
+                const button = document.getElementById('userMenuBtn');
+                
+                if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
+            setupDropdownClose();
             
-            // Add click event to user dropdown
+            // Add click event to user dropdown button
             document.getElementById('userMenuBtn').addEventListener('click', function(e) {
                 e.stopPropagation();
-                document.querySelector('.user-dropdown-content').classList.toggle('show');
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!event.target.closest('.user-dropdown-container')) {
-                    document.querySelector('.user-dropdown-content').classList.remove('show');
-                }
+                toggleDropdown();
             });
         });
     </script>
