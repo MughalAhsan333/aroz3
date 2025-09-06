@@ -34,22 +34,33 @@ exports.handler = async function(event, context) {
       .from('users')
       .insert([{ 
         email: email, 
-        password: password, // Note: We'll hash this later!
+        password: password,
         first_name: firstName, 
         last_name: lastName 
-      }]);
+      }])
+      .select(); // ← ADD THIS LINE to return the inserted data
 
     if (error) {
       throw error;
     }
 
+    // Return the created user data
     return {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ message: 'User created successfully!' })
+      body: JSON.stringify({ 
+        message: 'User created successfully!',
+        user: {
+          id: data[0].id,
+          email: data[0].email,
+          first_name: data[0].first_name,
+          last_name: data[0].last_name,
+          created_at: data[0].created_at
+        }
+      })
     };
 
   } catch (error) {
