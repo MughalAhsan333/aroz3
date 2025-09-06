@@ -27,7 +27,17 @@ exports.handler = async function(event, context) {
     // Get user ID from query string (e.g., /user-data?userId=123)
     const { userId } = event.queryStringParameters;
     if (!userId) {
-      throw new Error('User ID is required');
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          success: false,
+          error: 'User ID is required' 
+        })
+      };
     }
 
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -42,7 +52,17 @@ exports.handler = async function(event, context) {
       .single();
 
     if (error || !user) {
-      throw new Error('User not found');
+      return {
+        statusCode: 404,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          success: false,
+          error: 'User not found' 
+        })
+      };
     }
 
     return {
@@ -51,7 +71,10 @@ exports.handler = async function(event, context) {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(user)
+      body: JSON.stringify({ 
+        success: true,
+        data: user 
+      })
     };
 
   } catch (error) {
@@ -61,7 +84,10 @@ exports.handler = async function(event, context) {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ error: error.message })
+      body: JSON.stringify({ 
+        success: false,
+        error: error.message 
+      })
     };
   }
 };
