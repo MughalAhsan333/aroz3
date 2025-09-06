@@ -229,10 +229,45 @@
         // Check if user is logged in when page loads
         checkAuth();
 
-        // Load user data into dashboard
-        function loadUserData() {
-            const userData = JSON.parse(localStorage.getItem('loggedInUser'));
-            console.log("User data from localStorage:", userData); // Debug log
+        // Load user data INTO dashboard FROM SUPABASE
+async function loadUserData() {
+    try {
+        // Get user ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('userId');
+        
+        if (!userId) {
+            throw new Error("User ID not found in URL");
+        }
+
+        // Fetch FRESH user data from Supabase
+        const response = await fetch('/.netlify/functions/get-user?userId=' + userId);
+        const userData = await response.json();
+
+        if (userData.error) {
+            throw new Error(userData.error);
+        }
+
+        // Update UI with FRESH data from database
+        document.getElementById('userGreeting').textContent = 'Hi ' + userData.first_name + '!';
+        document.getElementById('dropdownUserName').textContent = userData.first_name + ' ' + userData.last_name;
+        document.getElementById('dropdownUserEmail').textContent = userData.email;
+        document.getElementById('overviewUserName').textContent = userData.first_name;
+        
+        // Update form fields
+        document.getElementById('infoFirstName').value = userData.first_name;
+        document.getElementById('infoLastName').value = userData.last_name;
+        document.getElementById('infoEmail').value = userData.email;
+        document.getElementById('settingsEmail').value = userData.email;
+        
+        // ... rest of your code ...
+
+    } catch (error) {
+        console.error('Failed to load user data:', error);
+        alert('Failed to load user data. Please log in again.');
+        logout();
+    }
+}
             
             if (userData && userData.firstName) {
                 // Update all user information displays
@@ -332,3 +367,4 @@
     </script>
 </body>
 </html>
+
