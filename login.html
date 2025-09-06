@@ -137,9 +137,18 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             throw new Error(result.error);
         }
 
-        // Login Success! Show checkmark
-        loader.style.display = 'none';
-        successCheck.style.display = 'block';
+        /// Login Success! Show checkmark
+loader.style.display = 'none';
+successCheck.style.display = 'block';
+
+// ONLY store the user ID, not the entire user data
+localStorage.setItem('isLoggedIn', 'true');
+localStorage.setItem('userId', result.user.id); // Store only ID
+
+// Redirect with user ID in URL
+setTimeout(() => {
+    window.location.href = 'dashboard.html?userId=' + result.user.id;
+}, 1500);
 
         // Convert Supabase format to frontend format
         const userData = {
@@ -172,3 +181,4 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 </body>
 
 </html>
+
