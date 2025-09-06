@@ -137,34 +137,17 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             throw new Error(result.error);
         }
 
-        /// Login Success! Show checkmark
-loader.style.display = 'none';
-successCheck.style.display = 'block';
+        // Login Success! Show checkmark
+        loader.style.display = 'none';
+        successCheck.style.display = 'block';
 
-// ONLY store the user ID, not the entire user data
-localStorage.setItem('isLoggedIn', 'true');
-localStorage.setItem('userId', result.user.id); // Store only ID
-
-// Redirect with user ID in URL
-setTimeout(() => {
-    window.location.href = 'dashboard.html?userId=' + result.user.id;
-}, 1500);
-
-        // Convert Supabase format to frontend format
-        const userData = {
-            firstName: result.user.first_name,
-            lastName: result.user.last_name,
-            email: result.user.email,
-            id: result.user.id
-        };
-
-        // Save login status and user data
+        // ONLY store the user ID, not the entire user data
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loggedInUser', JSON.stringify(userData));
+        localStorage.setItem('userId', result.user.id); // Store only ID
 
-        // Wait for the success animation to play, then redirect to DASHBOARD
+        // Redirect with user ID in URL
         setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'dashboard.html?userId=' + result.user.id;
         }, 1500);
 
     } catch (error) {
@@ -181,4 +164,5 @@ setTimeout(() => {
 </body>
 
 </html>
+
 
