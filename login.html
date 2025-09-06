@@ -72,94 +72,103 @@
     </div>
 
     <script>
-    // Handle Form Submission - UPDATED TO USE NETLIFY FUNCTION
-    document.getElementById('loginForm').addEventListener('submit', async function(event) {
-        event.preventDefault(); // Stop the form from reloading the page
+// Handle Form Submission - UPDATED TO USE NETLIFY FUNCTION
+document.getElementById('loginForm').addEventListener('submit', async function(event) {
+    event.preventDefault(); // Stop the form from reloading the page
 
-        // Get input elements and their values
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
+    // Get input elements and their values
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
 
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
-        // Reset all error states first
-        const allInputs = [emailInput, passwordInput];
-        allInputs.forEach(input => {
-            input.parentElement.classList.remove('error');
+    // Reset all error states first
+    const allInputs = [emailInput, passwordInput];
+    allInputs.forEach(input => {
+        input.parentElement.classList.remove('error');
+    });
+    document.getElementById('emailError').style.display = 'none';
+    document.getElementById('passwordError').style.display = 'none';
+
+    let isValid = true;
+
+    // --- VALIDATION: Check if any field is empty --- //
+    if (!email) {
+        emailInput.parentElement.classList.add('error');
+        isValid = false;
+    }
+    if (!password) {
+        passwordInput.parentElement.classList.add('error');
+        isValid = false;
+    }
+
+    // If any field is empty, stop here.
+    if (!isValid) {
+        return;
+    }
+
+    // --- VALIDATION PASSED - NOW USE NETLIFY FUNCTION --- //
+    // Show the loader overlay and spinning animation
+    const overlay = document.getElementById('loaderOverlay');
+    const loader = document.getElementById('loader');
+    const successCheck = document.getElementById('successCheckmark');
+
+    overlay.style.display = 'flex';
+    loader.style.display = 'block';
+
+    try {
+        // Send login data to Netlify Function
+        const response = await fetch('/.netlify/functions/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
         });
-        document.getElementById('emailError').style.display = 'none';
-        document.getElementById('passwordError').style.display = 'none';
 
-        let isValid = true;
+        const result = await response.json();
 
-        // --- VALIDATION: Check if any field is empty --- //
-        if (!email) {
-            emailInput.parentElement.classList.add('error');
-            isValid = false;
-        }
-        if (!password) {
-            passwordInput.parentElement.classList.add('error');
-            isValid = false;
+        // Check if login failed
+        if (result.error) {
+            throw new Error(result.error);
         }
 
-        // If any field is empty, stop here.
-        if (!isValid) {
-            return;
-        }
+        // Login Success! Show checkmark
+        loader.style.display = 'none';
+        successCheck.style.display = 'block';
 
-        // --- VALIDATION PASSED - NOW USE NETLIFY FUNCTION --- //
-        // Show the loader overlay and spinning animation
-        const overlay = document.getElementById('loaderOverlay');
-        const loader = document.getElementById('loader');
-        const successCheck = document.getElementById('successCheckmark');
+        // Convert Supabase format to frontend format
+        const userData = {
+            firstName: result.user.first_name,
+            lastName: result.user.last_name,
+            email: result.user.email,
+            id: result.user.id
+        };
 
-        overlay.style.display = 'flex';
-        loader.style.display = 'block';
+        // Save login status and user data
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(userData));
 
-        try {
-            // Send login data to Netlify Function
-            const response = await fetch('/.netlify/functions/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email: email,
-                    password: password
-                })
-            });
+        // Wait for the success animation to play, then redirect to DASHBOARD
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
 
-            const result = await response.json();
-
-            // Check if login failed
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-// IN login.html - REPLACE the success section (lines 116-125) with this:
-
-// Login Success! Show checkmark
-loader.style.display = 'none';
-successCheck.style.display = 'block';
-
-// Convert Supabase format to frontend format
-const userData = {
-    firstName: result.user.first_name,
-    lastName: result.user.last_name,
-    email: result.user.email,
-    id: result.user.id
-};
-
-// Save login status and user data
-localStorage.setItem('isLoggedIn', 'true');
-localStorage.setItem('loggedInUser', JSON.stringify(userData));
-
-// Wait for the success animation to play, then redirect to DASHBOARD
-setTimeout(() => {
-    window.location.href = 'dashboard.html';
-}, 1500);
-
+    } catch (error) {
+        // Hide loader on error
+        overlay.style.display = 'none';
+        
+        // Show error message
+        document.getElementById('passwordError').style.display = 'block';
+        document.getElementById('passwordError').textContent = 'Invalid email or password. Please try again.';
+        passwordInput.parentElement.classList.add('error');
+    }
+});
 </script>
 </body>
+
 </html>
