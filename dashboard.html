@@ -225,126 +225,128 @@
     </div>
 
     <script src="auth.js"></script>
-<script>
-    // Check if user is logged in when page loads
-    checkAuth();
+    <script>
+        // Check if user is logged in when page loads
+        checkAuth();
 
-    // Load user data INTO dashboard FROM SUPABASE
-    async function loadUserData() {
-        try {
-            // Get user ID from URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const userId = urlParams.get('userId');
-            
-            if (!userId) {
-                throw new Error("User ID not found in URL");
+        // Load user data INTO dashboard FROM SUPABASE
+        async function loadUserData() {
+            try {
+                // Get user ID from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('userId');
+                
+                if (!userId) {
+                    throw new Error("User ID not found in URL");
+                }
+
+                // Fetch FRESH user data from Supabase
+                const response = await fetch('/.netlify/functions/user-data?userId=' + userId);
+                const result = await response.json();
+
+                // ✅ FIXED: Check for success flag instead of error
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to load user data');
+                }
+
+                // ✅ Extract data from the correct location
+                const userData = result.data;
+
+                // Update UI with FRESH data from database
+                document.getElementById('userGreeting').textContent = 'Hi ' + userData.first_name + '!';
+                document.getElementById('dropdownUserName').textContent = userData.first_name + ' ' + userData.last_name;
+                document.getElementById('dropdownUserEmail').textContent = userData.email;
+                document.getElementById('overviewUserName').textContent = userData.first_name;
+                
+                // Update form fields
+                document.getElementById('infoFirstName').value = userData.first_name;
+                document.getElementById('infoLastName').value = userData.last_name;
+                document.getElementById('infoEmail').value = userData.email;
+                document.getElementById('settingsEmail').value = userData.email;
+                
+                // Set join date
+                const joinDate = new Date(userData.created_at).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'long', 
+                    year: 'numeric'
+                });
+                document.getElementById('memberSince').value = joinDate;
+                
+                // Generate personalized referral link
+                document.getElementById('referralLinkInput').value = 
+                    'https://aroz.com/signup?ref=' + userData.first_name + userData.last_name.substring(0, 3);
+
+            } catch (error) {
+                console.error('Failed to load user data:', error);
+                alert('Failed to load user data. Please log in again.');
+                logout();
             }
+        }
 
-            // Fetch FRESH user data from Supabase
-            const response = await fetch('/.netlify/functions/get-user?userId=' + userId);
-            const result = await response.json();
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            // Update UI with FRESH data from database
-            document.getElementById('userGreeting').textContent = 'Hi ' + result.first_name + '!';
-            document.getElementById('dropdownUserName').textContent = result.first_name + ' ' + result.last_name;
-            document.getElementById('dropdownUserEmail').textContent = result.email;
-            document.getElementById('overviewUserName').textContent = result.first_name;
-            
-            // Update form fields
-            document.getElementById('infoFirstName').value = result.first_name;
-            document.getElementById('infoLastName').value = result.last_name;
-            document.getElementById('infoEmail').value = result.email;
-            document.getElementById('settingsEmail').value = result.email;
-            
-            // Set join date
-            const joinDate = new Date(result.created_at).toLocaleDateString('en-IN', {
-                day: 'numeric',
-                month: 'long', 
-                year: 'numeric'
+        // Show/hide content sections
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
             });
-            document.getElementById('memberSince').value = joinDate;
             
-            // Generate personalized referral link
-            document.getElementById('referralLinkInput').value = 
-                'https://aroz.com/signup?ref=' + result.first_name + result.last_name.substring(0, 3);
-
-        } catch (error) {
-            console.error('Failed to load user data:', error);
-            alert('Failed to load user data. Please log in again.');
-            logout();
-        }
-    }
-
-    // Show/hide content sections
-    function showSection(sectionId) {
-        // Hide all sections
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        
-        // Remove active class from all sidebar links
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        // Show the selected section
-        document.getElementById(sectionId).classList.add('active');
-        
-        // Add active class to corresponding sidebar link
-        const correspondingLink = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
-        if (correspondingLink) {
-            correspondingLink.classList.add('active');
-        }
-    }
-
-    // Show/hide user dropdown
-    function toggleDropdown() {
-        const dropdown = document.getElementById('userDropdown');
-        dropdown.classList.toggle('show');
-    }
-
-    function hideDropdown() {
-        const dropdown = document.getElementById('userDropdown');
-        dropdown.classList.remove('show');
-    }
-
-    // Copy referral link function
-    function copyReferralLink() {
-        const linkInput = document.getElementById('referralLinkInput');
-        linkInput.select();
-        document.execCommand('copy');
-        alert('Referral link copied to clipboard!');
-    }
-
-    // Close dropdown when clicking outside
-    function setupDropdownClose() {
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
-            const button = document.getElementById('userMenuBtn');
+            // Remove active class from all sidebar links
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+            });
             
-            if (!button.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.remove('show');
+            // Show the selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to corresponding sidebar link
+            const correspondingLink = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
+            if (correspondingLink) {
+                correspondingLink.classList.add('active');
             }
-        });
-    }
+        }
 
-    // Initialize dashboard
-    document.addEventListener('DOMContentLoaded', function() {
-        loadUserData();
-        setupDropdownClose();
-        
-        // Add click event to user dropdown button
-        document.getElementById('userMenuBtn').addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleDropdown();
+        // Show/hide user dropdown
+        function toggleDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function hideDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.remove('show');
+        }
+
+        // Copy referral link function
+        function copyReferralLink() {
+            const linkInput = document.getElementById('referralLinkInput');
+            linkInput.select();
+            document.execCommand('copy');
+            alert('Referral link copied to clipboard!');
+        }
+
+        // Close dropdown when clicking outside
+        function setupDropdownClose() {
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('userDropdown');
+                const button = document.getElementById('userMenuBtn');
+                
+                if (!button.contains(event.target) && !dropdown.contains(event.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            setupDropdownClose();
+            
+            // Add click event to user dropdown button
+            document.getElementById('userMenuBtn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleDropdown();
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
-
-
