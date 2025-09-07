@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Aroz</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .admin-header {
+            background: #dc2626;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .admin-nav {
+            background: #374151;
+            padding: 1rem 2rem;
+        }
+        .admin-nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 2rem;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+        .admin-nav a:hover {
+            background: #4B5563;
+        }
+        .admin-content {
+            padding: 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card i {
+            font-size: 2rem;
+            color: #dc2626;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1><i class="fas fa-shield-alt"></i> Aroz Admin Panel</h1>
+        <div>
+            <span>Welcome, Admin</span>
+            <button onclick="logout()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #ef4444; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="admin-nav">
+        <a href="admin-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="admin-users.html"><i class="fas fa-users"></i> Users</a>
+        <a href="admin-tasks.html"><i class="fas fa-tasks"></i> Tasks</a>
+        <a href="admin-earnings.html"><i class="fas fa-money-bill-wave"></i> Earnings</a>
+    </div>
+
+    <div class="admin-content">
+        <h2>Admin Dashboard Overview</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-tasks"></i>
+                <h3 id="totalTasks">0</h3>
+                <p>Total Tasks</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-money-bill-wave"></i>
+                <h3 id="totalEarnings">₹0.00</h3>
+                <p>Total Earnings</p>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <h3 id="completedTasks">0</h3>
+                <p>Completed Tasks</p>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h3>Recent Activity</h3>
+            <div id="activityList">
+                <p>Loading recent activity...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check admin authentication
+        function checkAdminAuth() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = 'admin-login.html';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'admin-login.html';
+        }
+
+        // Load dashboard stats
+        async function loadDashboardStats() {
+            try {
+                // These functions will be created next
+                const [usersResponse, tasksResponse, earningsResponse] = await Promise.all([
+                    fetch('/.netlify/functions/get-all-users'),
+                    fetch('/.netlify/functions/get-all-tasks'),
+                    fetch('/.netlify/functions/get-all-earnings')
+                ]);
+
+                const [usersData, tasksData, earningsData] = await Promise.all([
+                    usersResponse.json(),
+                    tasksResponse.json(),
+                    earningsResponse.json()
+                ]);
+
+                if (usersData.success) {
+                    document.getElementById('totalUsers').textContent = usersData.data.length;
+                }
+                if (tasksData.success) {
+                    document.getElementById('totalTasks').textContent = tasksData.data.length;
+                }
+                if (earningsData.success) {
+                    const total = earningsData.data.reduce((sum, earning) => sum + parseFloat(earning.amount), 0);
+                    document.getElementById('totalEarnings').textContent = '₹' + total.toFixed(2);
+                }
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Initialize admin dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            loadDashboardStats();
+        });
+    </script>
+</body>
+</html>
