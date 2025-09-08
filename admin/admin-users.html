@@ -62,6 +62,13 @@
         .confirm-btn:hover {
             background-color: #b91c1c;
         }
+        .success-btn {
+            background-color: #10b981;
+            color: white;
+        }
+        .success-btn:hover {
+            background-color: #059669;
+        }
         /* Re-use the admin styles from dashboard */
         .admin-header {
             background: #dc2626;
@@ -196,6 +203,28 @@
         </div>
     </div>
 
+    <!-- Success Message Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-check-circle" style="color: #10b981;"></i> Success</h3>
+            <p id="successMessage">User was deleted successfully!</p>
+            <div class="modal-buttons">
+                <button onclick="closeSuccessModal()" class="modal-btn success-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-exclamation-circle" style="color: #dc2626;"></i> Error</h3>
+            <p id="errorMessage">An error occurred.</p>
+            <div class="modal-buttons">
+                <button onclick="closeErrorModal()" class="modal-btn cancel-btn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- Global Variables ---
         let allUsers = [];
@@ -203,32 +232,25 @@
 
         // --- Initialize the page ---
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize modal elements AFTER they exist in DOM
-            const modal = document.getElementById('confirmationModal');
+            // Set up event listeners for confirmation modal
             const confirmBtn = document.getElementById('modalConfirmBtn');
             const cancelBtn = document.getElementById('modalCancelBtn');
             
-            // Set up event listeners
             confirmBtn.addEventListener('click', async function() {
-                console.log("Confirm clicked, userIdToDelete:", userIdToDelete);
                 if (userIdToDelete) {
-                    modal.style.display = 'none';
+                    closeModal('confirmationModal');
                     await performUserDeletion(userIdToDelete);
-                } else {
-                    alert('Error: No user selected for deletion.');
                 }
             });
 
             cancelBtn.addEventListener('click', function() {
-                modal.style.display = 'none';
-                userIdToDelete = null;
+                closeModal('confirmationModal');
             });
 
             // Close modal if user clicks outside of it
             window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                    userIdToDelete = null;
+                if (event.target.classList.contains('modal')) {
+                    closeModal(event.target.id);
                 }
             });
 
@@ -236,6 +258,36 @@
             checkAdminAuth();
             loadAllUsers();
         });
+
+        // --- Modal Control Functions ---
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            if (modalId === 'confirmationModal') {
+                userIdToDelete = null;
+            }
+        }
+
+        function closeSuccessModal() {
+            closeModal('successModal');
+        }
+
+        function closeErrorModal() {
+            closeModal('errorModal');
+        }
+
+        function showSuccess(message) {
+            document.getElementById('successMessage').textContent = message;
+            showModal('successModal');
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            showModal('errorModal');
+        }
 
         // --- Authentication Functions ---
         function checkAdminAuth() {
@@ -260,11 +312,11 @@
                     allUsers = result.data;
                     displayUsers(allUsers);
                 } else {
-                    alert('Failed to load users: ' + result.error);
+                    showError('Failed to load users: ' + result.error);
                 }
             } catch (error) {
                 console.error('Error loading users:', error);
-                alert('Error loading users. Check console for details.');
+                showError('Error loading users. Please try again.');
             }
         }
 
@@ -303,18 +355,14 @@
             displayUsers(filteredUsers);
         }
 
-        // --- Modal Functions ---
+        // --- User Deletion Functions ---
         function promptDeleteUser(userId) {
-            console.log("Prompting delete for user ID:", userId);
             userIdToDelete = userId;
-            document.getElementById('confirmationModal').style.display = 'flex';
+            showModal('confirmationModal');
         }
 
-        // --- Deletion Function ---
         async function performUserDeletion(userId) {
             try {
-                console.log("Attempting to delete user ID:", userId);
-                
                 const response = await fetch('/.netlify/functions/delete-user', {
                     method: 'POST',
                     headers: {
@@ -324,17 +372,16 @@
                 });
 
                 const result = await response.json();
-                console.log("Delete response:", result);
 
                 if (result.success) {
-                    alert('User was deleted successfully!');
+                    showSuccess('User was deleted successfully!');
                     loadAllUsers();
                 } else {
-                    alert('Deletion failed: ' + result.error);
+                    showError('Deletion failed: ' + result.error);
                 }
             } catch (error) {
                 console.error('Error deleting user:', error);
-                alert('Error deleting user. Check console for details.');
+                showError('Error deleting user. Please try again.');
             }
         }
     </script>
