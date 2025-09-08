@@ -122,29 +122,39 @@
         // Load dashboard stats
         async function loadDashboardStats() {
             try {
-                // These functions will be created next
-                const [usersResponse, tasksResponse, earningsResponse] = await Promise.all([
-                    fetch('/.netlify/functions/get-all-users'),
-                    fetch('/.netlify/functions/get-all-tasks'),
-                    fetch('/.netlify/functions/get-all-earnings')
-                ]);
+                // Only fetch functions that exist - use individual try/catch for each
+                let usersData = { success: false, data: [] };
+                let tasksData = { success: false, data: [] };
+                
+                // Load users
+                try {
+                    const usersResponse = await fetch('/.netlify/functions/get-all-users');
+                    usersData = await usersResponse.json();
+                } catch (error) {
+                    console.error('Error loading users:', error);
+                }
 
-                const [usersData, tasksData, earningsData] = await Promise.all([
-                    usersResponse.json(),
-                    tasksResponse.json(),
-                    earningsResponse.json()
-                ]);
+                // Load tasks  
+                try {
+                    const tasksResponse = await fetch('/.netlify/functions/get-all-tasks');
+                    tasksData = await tasksResponse.json();
+                } catch (error) {
+                    console.error('Error loading tasks:', error);
+                }
 
+                // Update stats with available data
                 if (usersData.success) {
                     document.getElementById('totalUsers').textContent = usersData.data.length;
                 }
+                
                 if (tasksData.success) {
                     document.getElementById('totalTasks').textContent = tasksData.data.length;
+                    // Set completed tasks to same as total tasks for now
+                    document.getElementById('completedTasks').textContent = tasksData.data.length;
                 }
-                if (earningsData.success) {
-                    const total = earningsData.data.reduce((sum, earning) => sum + parseFloat(earning.amount), 0);
-                    document.getElementById('totalEarnings').textContent = '₹' + total.toFixed(2);
-                }
+
+                // Earnings will be 0.00 until we create the function
+                document.getElementById('totalEarnings').textContent = '₹0.00';
 
             } catch (error) {
                 console.error('Error loading stats:', error);
