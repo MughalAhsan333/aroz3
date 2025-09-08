@@ -200,44 +200,42 @@
         // --- Global Variables ---
         let allUsers = [];
         let userIdToDelete = null;
-        let modal, confirmBtn, cancelBtn;
 
         // --- Initialize the page ---
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize modal elements AFTER they exist in DOM
-            modal = document.getElementById('confirmationModal');
-            confirmBtn = document.getElementById('modalConfirmBtn');
-            cancelBtn = document.getElementById('modalCancelBtn');
+            const modal = document.getElementById('confirmationModal');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
             
             // Set up event listeners
-            setupEventListeners();
-            
-            // Load data and check auth
-            checkAdminAuth();
-            loadAllUsers();
-        });
-
-        function setupEventListeners() {
-            // Event listener for the DELETE button in the modal
             confirmBtn.addEventListener('click', async function() {
+                console.log("Confirm clicked, userIdToDelete:", userIdToDelete);
                 if (userIdToDelete) {
-                    closeModal();
+                    modal.style.display = 'none';
                     await performUserDeletion(userIdToDelete);
                 } else {
                     alert('Error: No user selected for deletion.');
                 }
             });
 
-            // Event listener for the CANCEL button in the modal
-            cancelBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                userIdToDelete = null;
+            });
 
             // Close modal if user clicks outside of it
             window.addEventListener('click', function(event) {
                 if (event.target === modal) {
-                    closeModal();
+                    modal.style.display = 'none';
+                    userIdToDelete = null;
                 }
             });
-        }
+
+            // Load data and check auth
+            checkAdminAuth();
+            loadAllUsers();
+        });
 
         // --- Authentication Functions ---
         function checkAdminAuth() {
@@ -307,20 +305,15 @@
 
         // --- Modal Functions ---
         function promptDeleteUser(userId) {
+            console.log("Prompting delete for user ID:", userId);
             userIdToDelete = userId;
-            console.log("Setting userIdToDelete to:", userIdToDelete);
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            modal.style.display = 'none';
-            userIdToDelete = null;
+            document.getElementById('confirmationModal').style.display = 'flex';
         }
 
         // --- Deletion Function ---
         async function performUserDeletion(userId) {
             try {
-                console.log("Deleting user ID:", userId);
+                console.log("Attempting to delete user ID:", userId);
                 
                 const response = await fetch('/.netlify/functions/delete-user', {
                     method: 'POST',
