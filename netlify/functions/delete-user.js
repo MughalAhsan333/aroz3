@@ -28,10 +28,30 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    // 3. FIXED: Properly get the user ID from the request body
-    const requestBody = JSON.parse(event.body);
+    // 3. FIXED: Properly parse the request body and extract userId
+    let requestBody;
+    try {
+      requestBody = JSON.parse(event.body);
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          success: false,
+          error: 'Invalid JSON format in request body' 
+        })
+      };
+    }
+
     const userId = requestBody.userId;
     
+    // Debug log to see what's being received
+    console.log('Received deletion request for userId:', userId);
+    console.log('Full request body:', requestBody);
+
     if (!userId) {
       return {
         statusCode: 400,
@@ -41,7 +61,7 @@ exports.handler = async function(event, context) {
         },
         body: JSON.stringify({ 
           success: false,
-          error: 'User ID is required' 
+          error: 'User ID is required. Received: ' + JSON.stringify(requestBody)
         })
       };
     }
@@ -52,14 +72,18 @@ exports.handler = async function(event, context) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 5. Delete the user from the 'users' table
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('users')
       .delete()
-      .eq('id', userId);
+      .eq('id', userId)
+      .select(); // Add select to see what was deleted
 
     if (error) {
+      console.error('Supabase deletion error:', error);
       throw error;
     }
+
+    console.log('Deletion successful. Deleted:', data);
 
     // 6. Return successful response
     return {
@@ -70,12 +94,14 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({ 
         success: true,
-        message: 'User successfully deleted' 
+        message: 'User successfully deleted',
+        deletedUser: data 
       })
     };
 
   } catch (error) {
     // 7. Return error response
+    console.error('Unexpected error in delete-user function:', error);
     return {
       statusCode: 500,
       headers: {
@@ -84,7 +110,7 @@ exports.handler = async function(event, context) {
       },
       body: JSON.stringify({ 
         success: false,
-        error: error.message 
+        error: 'Internal server error: ' + error.message 
       })
     };
   }
