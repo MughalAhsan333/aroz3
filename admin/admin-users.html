@@ -237,20 +237,27 @@
             const cancelBtn = document.getElementById('modalCancelBtn');
             
             confirmBtn.addEventListener('click', async function() {
+                console.log("Confirm clicked, userIdToDelete:", userIdToDelete);
                 if (userIdToDelete) {
                     closeModal('confirmationModal');
                     await performUserDeletion(userIdToDelete);
+                } else {
+                    showError('No user selected for deletion.');
                 }
             });
 
             cancelBtn.addEventListener('click', function() {
                 closeModal('confirmationModal');
+                userIdToDelete = null;
             });
 
             // Close modal if user clicks outside of it
             window.addEventListener('click', function(event) {
                 if (event.target.classList.contains('modal')) {
                     closeModal(event.target.id);
+                    if (event.target.id === 'confirmationModal') {
+                        userIdToDelete = null;
+                    }
                 }
             });
 
@@ -266,9 +273,6 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
-            if (modalId === 'confirmationModal') {
-                userIdToDelete = null;
-            }
         }
 
         function closeSuccessModal() {
@@ -357,11 +361,19 @@
 
         // --- User Deletion Functions ---
         function promptDeleteUser(userId) {
+            console.log("Setting userIdToDelete to:", userId);
             userIdToDelete = userId;
             showModal('confirmationModal');
         }
 
         async function performUserDeletion(userId) {
+            console.log("Performing deletion for user ID:", userId);
+            
+            if (!userId) {
+                showError('User ID is missing. Cannot delete user.');
+                return;
+            }
+
             try {
                 const response = await fetch('/.netlify/functions/delete-user', {
                     method: 'POST',
@@ -372,6 +384,7 @@
                 });
 
                 const result = await response.json();
+                console.log("Delete response:", result);
 
                 if (result.success) {
                     showSuccess('User was deleted successfully!');
