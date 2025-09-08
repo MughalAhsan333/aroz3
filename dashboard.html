@@ -6,6 +6,22 @@
     <title>Dashboard - Aroz</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .task-difficulty {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .loading-tasks {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+    </style>
 </head>
 <body>
     <!-- Top Navigation Bar -->
@@ -100,25 +116,9 @@
             <div id="tasks" class="content-section">
                 <h2>Available Tasks</h2>
                 <p>Complete these tasks to start earning money:</p>
-                <div class="task-list">
-                    <div class="task-card">
-                        <h3>Complete a Survey</h3>
-                        <p>Share your opinion and earn ₹50</p>
-                        <span class="task-reward">₹50</span>
-                        <button class="task-btn">Start Task</button>
-                    </div>
-                    <div class="task-card">
-                        <h3>Watch a Video</h3>
-                        <p>Watch a 2-minute video and earn ₹25</p>
-                        <span class="task-reward">₹25</span>
-                        <button class="task-btn">Start Task</button>
-                    </div>
-                    <div class="task-card">
-                        <h3>App Testing</h3>
-                        <p>Test a new app and provide feedback for ₹100</p>
-                        <span class="task-reward">₹100</span>
-                        <button class="task-btn">Start Task</button>
-                    </div>
+                <div class="task-list" id="taskListContainer">
+                    <div class="loading-tasks">Loading tasks...</div>
+                    <!-- Tasks will be loaded dynamically here -->
                 </div>
             </div>
 
@@ -283,6 +283,54 @@
             }
         }
 
+        // Load tasks from Supabase
+        async function loadTasks() {
+            try {
+                const response = await fetch('/.netlify/functions/get-all-tasks');
+                const result = await response.json();
+
+                const taskListContainer = document.getElementById('taskListContainer');
+                
+                if (result.success && result.data.length > 0) {
+                    // Clear loading message
+                    taskListContainer.innerHTML = '';
+                    
+                    // Display tasks from database
+                    result.data.forEach(task => {
+                        if (task.status === 'active') { // Only show active tasks
+                            const taskCard = document.createElement('div');
+                            taskCard.className = 'task-card';
+                            taskCard.innerHTML = `
+                                <h3>${task.title}</h3>
+                                <p>${task.description || 'No description available'}</p>
+                                <span class="task-reward">₹${task.reward || '0'}</span>
+                                ${task.difficulty ? `<span class="task-difficulty">${task.difficulty}</span>` : ''}
+                                <button class="task-btn" onclick="startTask(${task.id})">Start Task</button>
+                            `;
+                            taskListContainer.appendChild(taskCard);
+                        }
+                    });
+                    
+                    // If no active tasks found
+                    if (taskListContainer.children.length === 0) {
+                        taskListContainer.innerHTML = '<p>No active tasks available at the moment.</p>';
+                    }
+                } else {
+                    taskListContainer.innerHTML = '<p>No tasks available. Please check back later.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                document.getElementById('taskListContainer').innerHTML = 
+                    '<p>Error loading tasks. Please try again later.</p>';
+            }
+        }
+
+        // Start task function (placeholder)
+        function startTask(taskId) {
+            alert('Starting task ID: ' + taskId + '\nThis functionality will be implemented next.');
+            // You'll implement the actual task completion logic here
+        }
+
         // Show/hide content sections
         function showSection(sectionId) {
             // Hide all sections
@@ -302,6 +350,11 @@
             const correspondingLink = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
             if (correspondingLink) {
                 correspondingLink.classList.add('active');
+            }
+
+            // Load tasks when tasks section is shown
+            if (sectionId === 'tasks') {
+                loadTasks();
             }
         }
 
@@ -339,6 +392,7 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
+            loadTasks(); // Load tasks on page load
             setupDropdownClose();
             
             // Add click event to user dropdown button
