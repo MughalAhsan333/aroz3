@@ -926,4 +926,20 @@ nav a:hover {
     margin-top: 1.5rem;
     padding-top: 1rem;
     border-top: 1px solid #e5e7eb;
+
+}
+.task-difficulty {
+    display: inline-block;
+    padding: 4px 8px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.loading-tasks {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
 }
