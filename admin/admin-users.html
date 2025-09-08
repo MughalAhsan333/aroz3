@@ -197,7 +197,49 @@
     </div>
 
     <script>
-        // Check admin authentication
+        // --- Global Variables ---
+        let allUsers = [];
+        let userIdToDelete = null;
+        let modal, confirmBtn, cancelBtn;
+
+        // --- Initialize the page ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize modal elements AFTER they exist in DOM
+            modal = document.getElementById('confirmationModal');
+            confirmBtn = document.getElementById('modalConfirmBtn');
+            cancelBtn = document.getElementById('modalCancelBtn');
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Load data and check auth
+            checkAdminAuth();
+            loadAllUsers();
+        });
+
+        function setupEventListeners() {
+            // Event listener for the DELETE button in the modal
+            confirmBtn.addEventListener('click', async function() {
+                if (userIdToDelete) {
+                    closeModal();
+                    await performUserDeletion(userIdToDelete);
+                } else {
+                    alert('Error: No user selected for deletion.');
+                }
+            });
+
+            // Event listener for the CANCEL button in the modal
+            cancelBtn.addEventListener('click', closeModal);
+
+            // Close modal if user clicks outside of it
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        // --- Authentication Functions ---
         function checkAdminAuth() {
             const token = localStorage.getItem('adminToken');
             if (!token) {
@@ -205,15 +247,12 @@
             }
         }
 
-        // Logout function
         function logout() {
             localStorage.removeItem('adminToken');
             window.location.href = 'admin-login.html';
         }
 
-        let allUsers = []; // Store all users for search filtering
-
-        // Fetch all users from Netlify function
+        // --- Data Loading Functions ---
         async function loadAllUsers() {
             try {
                 const response = await fetch('/.netlify/functions/get-all-users');
@@ -231,81 +270,6 @@
             }
         }
 
-        // Simple search/filter function
-        function searchUsers() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const filteredUsers = allUsers.filter(user => 
-                user.email.toLowerCase().includes(searchTerm) ||
-                (user.first_name && user.first_name.toLowerCase().includes(searchTerm)) ||
-                (user.last_name && user.last_name.toLowerCase().includes(searchTerm)) ||
-                user.id.toString().includes(searchTerm)
-            );
-            displayUsers(filteredUsers);
-        }
-
-        // --- Custom Modal Logic for Deletion ---
-        const modal = document.getElementById('confirmationModal');
-        const confirmBtn = document.getElementById('modalConfirmBtn');
-        const cancelBtn = document.getElementById('modalCancelBtn');
-
-        let userIdToDelete = null; // Will hold the ID of the user to be deleted
-
-        // Function to open the modal and store the user ID
-        function promptDeleteUser(userId) {
-            userIdToDelete = userId;
-            modal.style.display = 'flex';
-        }
-
-        // Function to close the modal
-        function closeModal() {
-            modal.style.display = 'none';
-            userIdToDelete = null;
-        }
-
-        // Event listener for the DELETE button in the modal
-        confirmBtn.addEventListener('click', async function() {
-            if (userIdToDelete) {
-                closeModal(); // Close the modal first
-                await performUserDeletion(userIdToDelete); // Perform the actual deletion
-            }
-        });
-
-        // Event listener for the CANCEL button in the modal
-        cancelBtn.addEventListener('click', closeModal);
-
-        // Close modal if user clicks outside of it
-        window.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
-
-        // The function that actually calls the API to delete the user
-        async function performUserDeletion(userId) {
-            try {
-                const response = await fetch('/.netlify/functions/delete-user', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ userId: userId })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert('User was deleted successfully!');
-                    loadAllUsers(); // Reload the user list
-                } else {
-                    alert('Deletion failed: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                alert('Error deleting user. Check console for details.');
-            }
-        }
-
-        // Display users in the table with modal delete buttons
         function displayUsers(users) {
             const tableBody = document.getElementById('usersTableBody');
             
@@ -330,11 +294,56 @@
             `).join('');
         }
 
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAdminAuth();
-            loadAllUsers();
-        });
+        function searchUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filteredUsers = allUsers.filter(user => 
+                user.email.toLowerCase().includes(searchTerm) ||
+                (user.first_name && user.first_name.toLowerCase().includes(searchTerm)) ||
+                (user.last_name && user.last_name.toLowerCase().includes(searchTerm)) ||
+                user.id.toString().includes(searchTerm)
+            );
+            displayUsers(filteredUsers);
+        }
+
+        // --- Modal Functions ---
+        function promptDeleteUser(userId) {
+            userIdToDelete = userId;
+            console.log("Setting userIdToDelete to:", userIdToDelete);
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+            userIdToDelete = null;
+        }
+
+        // --- Deletion Function ---
+        async function performUserDeletion(userId) {
+            try {
+                console.log("Deleting user ID:", userId);
+                
+                const response = await fetch('/.netlify/functions/delete-user', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userId: userId })
+                });
+
+                const result = await response.json();
+                console.log("Delete response:", result);
+
+                if (result.success) {
+                    alert('User was deleted successfully!');
+                    loadAllUsers();
+                } else {
+                    alert('Deletion failed: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user. Check console for details.');
+            }
+        }
     </script>
 </body>
 </html>
