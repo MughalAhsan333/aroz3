@@ -280,6 +280,11 @@
                         <option value="hard">Hard</option>
                     </select>
                 </div>
+                <div class="form-group">
+    <label for="taskLink">Completion Link (for URL shortener)</label>
+    <input type="url" id="taskLink" placeholder="https://aroz5.netlify.app/.netlify/functions/complete-task?taskId=123&userId=USER_ID">
+    <small>Use USER_ID as placeholder - URL shortener will replace it</small>
+</div>
                 <div class="modal-buttons">
                     <button type="button" onclick="closeModal('taskFormModal')" class="modal-btn cancel-btn">Cancel</button>
                     <button type="submit" class="modal-btn success-btn">Save Task</button>
