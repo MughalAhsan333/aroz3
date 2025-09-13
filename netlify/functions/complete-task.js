@@ -26,23 +26,25 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const { taskId, userId } = event.queryStringParameters;
-    
-    if (!taskId || !userId) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'text/html'
-        },
-        body: `
-          <html><body>
-            <h2>Error: Missing Parameters</h2>
-            <p>Task ID or User ID missing from URL</p>
-          </body></html>
-        `
-      };
-    }
+const { taskId, userId } = event.queryStringParameters;
+
+// Convert userId to number (since users.id is BIGINT)
+const userIdNumber = parseInt(userId);
+if (isNaN(userIdNumber)) {
+  return {
+    statusCode: 400,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Content-Type': 'text/html'
+    },
+    body: `
+      <html><body>
+        <h2>Error: Invalid User ID</h2>
+        <p>User ID must be a number</p>
+      </body></html>
+    `
+  };
+}
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;
