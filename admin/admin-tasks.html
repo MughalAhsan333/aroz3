@@ -388,34 +388,39 @@
         }
 
         function displayTasks(tasks) {
-            const tableBody = document.getElementById('tasksTableBody');
-            
-            if (tasks.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No tasks found.</td></tr>';
-                return;
-            }
+    const tableBody = document.getElementById('tasksTableBody');
+    
+    if (tasks.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No tasks found.</td></tr>';
+        return;
+    }
 
-            tableBody.innerHTML = tasks.map(task => `
-                <tr>
-                    <td>${task.id}</td>
-                    <td>${task.title}</td>
-                    <td>${task.description || 'No description'}</td>
-                    <td>₹${task.reward || '0'}</td>
-                    <td><span class="status-badge">${task.status || 'active'}</span></td>
-                    <td>${task.difficulty || 'Not set'}</td>
-                    <td>${new Date(task.created_at).toLocaleDateString()}</td>
-                    <td>
-                        <button class="action-btn edit-btn" onclick="editTask(${task.id})">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="action-btn delete-btn" onclick="promptDeleteTask(${task.id})">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
+    tableBody.innerHTML = tasks.map(task => `
+        <tr>
+            <td>${task.id}</td>
+            <td>${task.title}</td>
+            <td>${task.description || 'No description'}</td>
+            <td>₹${task.reward || '0'}</td>
+            <td><span class="status-badge">${task.status || 'active'}</span></td>
+            <td>${task.difficulty || 'Not set'}</td>
+            <td>
+                ${task.completion_link ? 
+                    `<a href="${task.completion_link}" target="_blank" style="font-size: 12px;">View Link</a>` : 
+                    'Not set'
+                }
+            </td>
+            <td>${new Date(task.created_at).toLocaleDateString()}</td>
+            <td>
+                <button class="action-btn edit-btn" onclick="editTask(${task.id})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="action-btn delete-btn" onclick="promptDeleteTask(${task.id})">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
         function searchTasks() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filteredTasks = allTasks.filter(task => 
