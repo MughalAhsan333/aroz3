@@ -221,7 +221,6 @@
                         <th>Reward</th>
                         <th>Status</th>
                         <th>Difficulty</th>
-                        <th>Completion Link</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -452,7 +451,6 @@
                 document.getElementById('taskReward').value = task.reward || '';
                 document.getElementById('taskStatus').value = task.status || 'active';
                 document.getElementById('taskDifficulty').value = task.difficulty || '';
-                document.getElementById('taskCompletionLink').value = task.completion_link || '';
                 showModal('taskFormModal');
             }
         }
@@ -470,7 +468,6 @@
                 reward: parseFloat(document.getElementById('taskReward').value),
                 status: document.getElementById('taskStatus').value,
                 difficulty: document.getElementById('taskDifficulty').value
-                completion_link: document.getElementById('taskCompletionLink').value
             };
 
             try {
