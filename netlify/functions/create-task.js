@@ -92,18 +92,4 @@ exports.handler = async function(event, context) {
       })
     };
   }
-  // netlify/functions/create-task.js
-// In the try block, add completion_link to the destructuring:
-const { title, description, reward, status, difficulty, completion_link } = JSON.parse(event.body);
-
-// In the insert data, add:
-{
-  title: title,
-  description: description,
-  reward: reward || 0,
-  status: status || 'active',
-  difficulty: difficulty || null,
-  completion_link: completion_link || null, // ADD THIS LINE
-  created_at: new Date().toISOString()
-}
 };
