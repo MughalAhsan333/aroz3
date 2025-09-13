@@ -89,7 +89,7 @@ if (isNaN(userIdNumber)) {
     const { error: completionError } = await supabase
       .from('task_completions')
       .insert({
-        user_id: userId,
+        user_id: userIdNumber,
         task_id: taskId,
         amount_earned: task.reward
       });
