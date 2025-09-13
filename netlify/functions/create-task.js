@@ -27,7 +27,7 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const { title, description, reward, status, difficulty } = JSON.parse(event.body);
+    const { title, description, reward, status, difficulty, completion_link } = JSON.parse(event.body);
     
     if (!title) {
       return {
@@ -57,6 +57,7 @@ exports.handler = async function(event, context) {
           reward: reward || 0,
           status: status || 'active',
           difficulty: difficulty || null,
+          completion_link: completion_link || null,
           created_at: new Date().toISOString()
         }
       ])
