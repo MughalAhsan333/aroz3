@@ -326,10 +326,29 @@
         }
 
         // Start task function (placeholder)
-        function startTask(taskId) {
-            alert('Starting task ID: ' + taskId + '\nThis functionality will be implemented next.');
-            // You'll implement the actual task completion logic here
-        }
+        function startTask(taskId, completionLinkTemplate) {
+    // Get current user ID from URL or auth
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    if (!completionLinkTemplate) {
+        alert('This task is not properly configured. Please contact support.');
+        return;
+    }
+    
+    if (!userId) {
+        alert('User not identified. Please log in again.');
+        return;
+    }
+    
+    // Replace placeholders with actual values
+    const actualCompletionLink = completionLinkTemplate
+        .replace('TASK_ID', taskId)
+        .replace('USER_ID', userId);
+    
+    // Redirect to the actual completion link (which goes to URL shortener)
+    window.location.href = actualCompletionLink;
+}
 
         // Show/hide content sections
         function showSection(sectionId) {
@@ -404,4 +423,5 @@
     </script>
 </body>
 </html>
+
 
