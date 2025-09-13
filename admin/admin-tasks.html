@@ -221,7 +221,6 @@
                         <th>Reward</th>
                         <th>Status</th>
                         <th>Difficulty</th>
-                        <th>Completion Link</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
@@ -281,12 +280,6 @@
                         <option value="hard">Hard</option>
                     </select>
                 </div>
-                <div class="form-group">
-    <label for="taskCompletionLink">Completion Link Template</label>
-    <input type="url" id="taskCompletionLink" 
-           placeholder="https://aroz3.netlify.app/.netlify/functions/complete-task?taskId=TASK_ID&userId=USER_ID">
-    <small>Use TASK_ID and USER_ID as placeholders - URL shortener will replace them</small>
-</div>
                 <div class="modal-buttons">
                     <button type="button" onclick="closeModal('taskFormModal')" class="modal-btn cancel-btn">Cancel</button>
                     <button type="submit" class="modal-btn success-btn">Save Task</button>
@@ -388,39 +381,34 @@
         }
 
         function displayTasks(tasks) {
-    const tableBody = document.getElementById('tasksTableBody');
-    
-    if (tasks.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No tasks found.</td></tr>';
-        return;
-    }
+            const tableBody = document.getElementById('tasksTableBody');
+            
+            if (tasks.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No tasks found.</td></tr>';
+                return;
+            }
 
-    tableBody.innerHTML = tasks.map(task => `
-        <tr>
-            <td>${task.id}</td>
-            <td>${task.title}</td>
-            <td>${task.description || 'No description'}</td>
-            <td>₹${task.reward || '0'}</td>
-            <td><span class="status-badge">${task.status || 'active'}</span></td>
-            <td>${task.difficulty || 'Not set'}</td>
-            <td>
-                ${task.completion_link ? 
-                    `<a href="${task.completion_link}" target="_blank" style="font-size: 12px;">View Link</a>` : 
-                    'Not set'
-                }
-            </td>
-            <td>${new Date(task.created_at).toLocaleDateString()}</td>
-            <td>
-                <button class="action-btn edit-btn" onclick="editTask(${task.id})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="action-btn delete-btn" onclick="promptDeleteTask(${task.id})">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
+            tableBody.innerHTML = tasks.map(task => `
+                <tr>
+                    <td>${task.id}</td>
+                    <td>${task.title}</td>
+                    <td>${task.description || 'No description'}</td>
+                    <td>₹${task.reward || '0'}</td>
+                    <td><span class="status-badge">${task.status || 'active'}</span></td>
+                    <td>${task.difficulty || 'Not set'}</td>
+                    <td>${new Date(task.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editTask(${task.id})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn delete-btn" onclick="promptDeleteTask(${task.id})">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
         function searchTasks() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filteredTasks = allTasks.filter(task => 
@@ -458,7 +446,6 @@
                 document.getElementById('taskReward').value = task.reward || '';
                 document.getElementById('taskStatus').value = task.status || 'active';
                 document.getElementById('taskDifficulty').value = task.difficulty || '';
-                document.getElementById('taskCompletionLink').value = task.completion_link || '';
                 showModal('taskFormModal');
             }
         }
@@ -476,7 +463,6 @@
                 reward: parseFloat(document.getElementById('taskReward').value),
                 status: document.getElementById('taskStatus').value,
                 difficulty: document.getElementById('taskDifficulty').value
-                completion_link: document.getElementById('taskCompletionLink').value
             };
 
             try {
