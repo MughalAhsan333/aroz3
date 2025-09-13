@@ -305,7 +305,7 @@
                                 <p>${task.description || 'No description available'}</p>
                                 <span class="task-reward">₹${task.reward || '0'}</span>
                                 ${task.difficulty ? `<span class="task-difficulty">${task.difficulty}</span>` : ''}
-                                <button class="task-btn" onclick="startTask(${task.id})">Start Task</button>
+                                <button class="task-btn" onclick="startTask(${task.id}, '${task.completion_link || ''}')">Start Task</button>
                             `;
                             taskListContainer.appendChild(taskCard);
                         }
@@ -404,3 +404,4 @@
     </script>
 </body>
 </html>
+
