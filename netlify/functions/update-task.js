@@ -27,7 +27,7 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const { taskId, title, description, reward, status } = JSON.parse(event.body);
+    const { taskId, title, description, reward, status, difficulty } = JSON.parse(event.body);
     
     if (!taskId) {
       return {
@@ -55,6 +55,7 @@ exports.handler = async function(event, context) {
         description: description,
         reward: reward,
         status: status,
+        difficulty: difficulty,
         updated_at: new Date().toISOString()
       })
       .eq('id', taskId)
