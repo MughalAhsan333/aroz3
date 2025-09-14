@@ -21,6 +21,22 @@
             padding: 2rem;
             color: #6b7280;
         }
+        .task-complete-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .task-complete-btn:hover {
+            background: #059669;
+        }
+        .task-complete-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -226,6 +242,9 @@
 
     <script src="auth.js"></script>
     <script>
+        // --- Global Variables ---
+        let currentUserId = null;
+
         // Check if user is logged in when page loads
         checkAuth();
 
@@ -240,16 +259,16 @@
                     throw new Error("User ID not found in URL");
                 }
 
+                currentUserId = userId; // Store for later use
+
                 // Fetch FRESH user data from Supabase
                 const response = await fetch('/.netlify/functions/user-data?userId=' + userId);
                 const result = await response.json();
 
-                // ✅ FIXED: Check for success flag instead of error
                 if (!result.success) {
                     throw new Error(result.error || 'Failed to load user data');
                 }
 
-                // ✅ Extract data from the correct location
                 const userData = result.data;
 
                 // Update UI with FRESH data from database
@@ -297,7 +316,7 @@
                     
                     // Display tasks from database
                     result.data.forEach(task => {
-                        if (task.status === 'active') { // Only show active tasks
+                        if (task.status === 'active') {
                             const taskCard = document.createElement('div');
                             taskCard.className = 'task-card';
                             taskCard.innerHTML = `
@@ -305,13 +324,16 @@
                                 <p>${task.description || 'No description available'}</p>
                                 <span class="task-reward">₹${task.reward || '0'}</span>
                                 ${task.difficulty ? `<span class="task-difficulty">${task.difficulty}</span>` : ''}
-                                <button class="task-btn" onclick="startTask(${task.id}, '${task.completion_link || ''}')">Start Task</button>
+                                
+                                ${task.completion_link ? 
+                                    `<button class="task-btn" onclick="startTask(${task.id}, '${task.completion_link}')">Start Task</button>` :
+                                    `<button class="task-complete-btn" onclick="completeTaskManually(${task.id})">Mark as Completed</button>`
+                                }
                             `;
                             taskListContainer.appendChild(taskCard);
                         }
                     });
                     
-                    // If no active tasks found
                     if (taskListContainer.children.length === 0) {
                         taskListContainer.innerHTML = '<p>No active tasks available at the moment.</p>';
                     }
@@ -325,53 +347,81 @@
             }
         }
 
-        // Start task function (placeholder)
-        function startTask(taskId, completionLinkTemplate) {
-    // Get current user ID from URL or auth
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    
-    if (!completionLinkTemplate) {
-        alert('This task is not properly configured. Please contact support.');
-        return;
-    }
-    
-    if (!userId) {
-        alert('User not identified. Please log in again.');
-        return;
-    }
-    
-    // Replace placeholders with actual values
-    const actualCompletionLink = completionLinkTemplate
-        .replace('TASK_ID', taskId)
-        .replace('USER_ID', userId);
-    
-    // Redirect to the actual completion link (which goes to URL shortener)
-    window.location.href = actualCompletionLink;
-}
+        // Start task function - goes to external URL shortener
+        function startTask(taskId, completionLink) {
+            if (!completionLink) {
+                alert('This task is not properly configured. Please contact support.');
+                return;
+            }
+            
+            if (!currentUserId) {
+                alert('User not identified. Please log in again.');
+                return;
+            }
+            
+            // Replace USER_ID placeholder with actual user ID
+            const actualLink = completionLink.replace('USER_ID', currentUserId);
+            
+            // Redirect to the URL shortener
+            window.location.href = actualLink;
+        }
+
+        // Manual task completion function
+        async function completeTaskManually(taskId) {
+            if (!confirm('Mark this task as completed? You will receive ₹' + getTaskReward(taskId) + ' upon verification.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/.netlify/functions/complete-task-manually', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        taskId: taskId,
+                        userId: currentUserId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Task marked as completed! Reward will be added after verification.');
+                    loadTasks(); // Reload tasks
+                    loadUserData(); // Refresh user stats
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error completing task:', error);
+                alert('Error completing task. Please try again.');
+            }
+        }
+
+        // Helper function to get task reward (you'll need to implement this)
+        function getTaskReward(taskId) {
+            // This would normally fetch from your tasks data
+            return '50'; // Default reward
+        }
 
         // Show/hide content sections
         function showSection(sectionId) {
-            // Hide all sections
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
             
-            // Remove active class from all sidebar links
             document.querySelectorAll('.sidebar-link').forEach(link => {
                 link.classList.remove('active');
             });
             
-            // Show the selected section
             document.getElementById(sectionId).classList.add('active');
             
-            // Add active class to corresponding sidebar link
             const correspondingLink = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
             if (correspondingLink) {
                 correspondingLink.classList.add('active');
             }
 
-            // Load tasks when tasks section is shown
             if (sectionId === 'tasks') {
                 loadTasks();
             }
@@ -411,10 +461,9 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             loadUserData();
-            loadTasks(); // Load tasks on page load
+            loadTasks();
             setupDropdownClose();
             
-            // Add click event to user dropdown button
             document.getElementById('userMenuBtn').addEventListener('click', function(e) {
                 e.stopPropagation();
                 toggleDropdown();
@@ -423,5 +472,3 @@
     </script>
 </body>
 </html>
-
-
