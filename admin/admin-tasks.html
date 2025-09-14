@@ -376,33 +376,39 @@
             document.getElementById('step2').classList.remove('active');
         }
 
-        function showStep2() {
-            // Validate step 1
-            const title = document.getElementById('taskTitle').value;
-            const reward = document.getElementById('taskReward').value;
-            
-            if (!title || !reward) {
-                showError('Please fill in all required fields in Step 1');
-                return;
-            }
+function showStep2() {
+    // Validate step 1
+    const title = document.getElementById('taskTitle').value;
+    const reward = document.getElementById('taskReward').value;
+    
+    if (!title || !reward) {
+        showError('Please fill in all required fields in Step 1');
+        return;
+    }
 
-            // Store step 1 data
-            currentTaskData = {
-                title: title,
-                description: document.getElementById('taskDescription').value,
-                reward: parseFloat(reward),
-                status: document.getElementById('taskStatus').value,
-                difficulty: document.getElementById('taskDifficulty').value
-            };
+    // Store step 1 data
+    currentTaskData = {
+        title: title,
+        description: document.getElementById('taskDescription').value,
+        reward: parseFloat(reward),
+        status: document.getElementById('taskStatus').value,
+        difficulty: document.getElementById('taskDifficulty').value
+    };
 
-            // Generate completion link
-            const completionLink = `https://aroz3.netlify.app/.netlify/functions/complete-task?taskId=TASK_ID&userId=USER_ID`;
-            document.getElementById('generatedCompletionLink').value = completionLink;
+    // For EDIT mode - we have the actual task ID
+    if (isEditMode && currentEditTaskId) {
+        const completionLink = `https://aroz3.netlify.app/.netlify/functions/complete-task?taskId=${currentEditTaskId}&userId=USER_ID`;
+        document.getElementById('generatedCompletionLink').value = completionLink;
+    } else {
+        // For NEW tasks - use placeholder, you'll edit after creation
+        document.getElementById('generatedCompletionLink').value = "Create the task first, then edit it to get the completion link";
+        document.getElementById('generatedCompletionLink').disabled = true;
+    }
 
-            // Show step 2
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step2').classList.add('active');
-        }
+    // Show step 2
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+}
 
         function copyGeneratedLink() {
             const linkInput = document.getElementById('generatedCompletionLink');
