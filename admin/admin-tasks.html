@@ -69,6 +69,21 @@
         .success-btn:hover {
             background-color: #059669;
         }
+        /* Two-step form styles */
+        .form-step {
+            display: none;
+        }
+        .form-step.active {
+            display: block;
+        }
+        .link-copy-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        .link-copy-container input {
+            flex: 1;
+        }
         /* Re-use the admin styles from dashboard */
         .admin-header {
             background: #dc2626;
@@ -221,14 +236,14 @@
                         <th>Reward</th>
                         <th>Status</th>
                         <th>Difficulty</th>
-                        <th>Completion Link</th>
+                        <th>Task Link</th>
                         <th>Created</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tasksTableBody">
                     <tr>
-                        <td colspan="8" style="text-align: center;">Loading tasks...</td>
+                        <td colspan="9" style="text-align: center;">Loading tasks...</td>
                     </tr>
                 </tbody>
             </table>
@@ -250,53 +265,72 @@
     <!-- Add/Edit Task Modal -->
     <div id="taskFormModal" class="modal">
         <div class="modal-content">
-            <h3 id="taskFormTitle">Add New Task</h3>
-            <form id="taskForm">
-                <div class="form-group">
-                    <label for="taskTitle">Title</label>
-                    <input type="text" id="taskTitle" required>
-                </div>
-                <div class="form-group">
-                    <label for="taskDescription">Description</label>
-                    <textarea id="taskDescription" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="taskReward">Reward (₹)</label>
-                    <input type="number" id="taskReward" step="0.01" min="0" required>
-                </div>
-                <div class="form-group">
-                    <label for="taskStatus">Status</label>
-                    <select id="taskStatus" required>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="taskDifficulty">Difficulty</label>
-                    <select id="taskDifficulty">
-                        <option value="">Select Difficulty</option>
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                    </select>
+            <!-- Step 1: Task Details -->
+            <div id="step1" class="form-step active">
+                <h3 id="taskFormTitle">Add New Task - Step 1/2</h3>
+                <form id="taskFormStep1">
                     <div class="form-group">
-    <label for="taskCompletionLink">Completion Link Template</label>
-    <input type="url" id="taskCompletionLink" 
-           placeholder="https://aroz3.netlify.app/.netlify/functions/complete-task?taskId=TASK_ID&userId=USER_ID">
-    <small>Use TASK_ID and USER_ID as placeholders - URL shortener will replace them</small>
-</div>
-                </div>
+                        <label for="taskTitle">Title</label>
+                        <input type="text" id="taskTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskReward">Reward (₹)</label>
+                        <input type="number" id="taskReward" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskStatus">Status</label>
+                        <select id="taskStatus" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDifficulty">Difficulty</label>
+                        <select id="taskDifficulty">
+                            <option value="">Select Difficulty</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" onclick="closeModal('taskFormModal')" class="modal-btn cancel-btn">Cancel</button>
+                        <button type="button" onclick="showStep2()" class="modal-btn success-btn">Next →</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 2: Completion Link -->
+            <div id="step2" class="form-step">
+                <h3>Step 2: Generate Task Link</h3>
                 <div class="form-group">
-    <label for="taskLink">Completion Link (for URL shortener)</label>
-    <input type="url" id="taskLink" placeholder="https://aroz5.netlify.app/.netlify/functions/complete-task?taskId=123&userId=USER_ID">
-    <small>Use USER_ID as placeholder - URL shortener will replace it</small>
-</div>
-                <div class="modal-buttons">
-                    <button type="button" onclick="closeModal('taskFormModal')" class="modal-btn cancel-btn">Cancel</button>
-                    <button type="submit" class="modal-btn success-btn">Save Task</button>
+                    <label>Auto-Generated Completion Link</label>
+                    <div class="link-copy-container">
+                        <input type="text" id="generatedCompletionLink" readonly>
+                        <button type="button" onclick="copyGeneratedLink()" class="modal-btn success-btn">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <small>1. Copy this link → 2. Shorten it on your URL shortener → 3. Paste shortened link below</small>
                 </div>
-            </form>
+                
+                <div class="form-group">
+                    <label for="finalTaskLink">Paste Shortened Link Here</label>
+                    <input type="url" id="finalTaskLink" required
+                           placeholder="https://bit.ly/your-shortened-link">
+                    <small>This will be the link users click to start the task</small>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" onclick="showStep1()" class="modal-btn cancel-btn">← Back</button>
+                    <button type="button" onclick="saveTask()" class="modal-btn success-btn">Save Task</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -328,13 +362,54 @@
         let taskIdToDelete = null;
         let isEditMode = false;
         let currentEditTaskId = null;
+        let currentTaskData = {}; // Store data between steps
 
         // --- Initialize the page ---
         document.addEventListener('DOMContentLoaded', function() {
             checkAdminAuth();
             loadAllTasks();
-            setupFormSubmit();
         });
+
+        // --- Two-Step Form Functions ---
+        function showStep1() {
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('step2').classList.remove('active');
+        }
+
+        function showStep2() {
+            // Validate step 1
+            const title = document.getElementById('taskTitle').value;
+            const reward = document.getElementById('taskReward').value;
+            
+            if (!title || !reward) {
+                showError('Please fill in all required fields in Step 1');
+                return;
+            }
+
+            // Store step 1 data
+            currentTaskData = {
+                title: title,
+                description: document.getElementById('taskDescription').value,
+                reward: parseFloat(reward),
+                status: document.getElementById('taskStatus').value,
+                difficulty: document.getElementById('taskDifficulty').value
+            };
+
+            // Generate completion link
+            const completionLink = `https://aroz3.netlify.app/.netlify/functions/complete-task?taskId=TASK_ID&userId=USER_ID`;
+            document.getElementById('generatedCompletionLink').value = completionLink;
+
+            // Show step 2
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+        }
+
+        function copyGeneratedLink() {
+            const linkInput = document.getElementById('generatedCompletionLink');
+            linkInput.select();
+            document.execCommand('copy');
+            alert('Completion link copied to clipboard!');
+        }
 
         // --- Modal Control Functions ---
         function showModal(modalId) {
@@ -396,7 +471,7 @@
             const tableBody = document.getElementById('tasksTableBody');
             
             if (tasks.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No tasks found.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No tasks found.</td></tr>';
                 return;
             }
 
@@ -409,11 +484,11 @@
                     <td><span class="status-badge">${task.status || 'active'}</span></td>
                     <td>${task.difficulty || 'Not set'}</td>
                     <td>
-                ${task.completion_link ? 
-                    `<a href="${task.completion_link}" target="_blank" style="font-size: 12px;">View Link</a>` : 
-                    'Not set'
-                }
-            </td>
+                        ${task.completion_link ? 
+                            `<a href="${task.completion_link}" target="_blank" style="font-size: 12px;">View Link</a>` : 
+                            'Not set'
+                        }
+                    </td>
                     <td>${new Date(task.created_at).toLocaleDateString()}</td>
                     <td>
                         <button class="action-btn edit-btn" onclick="editTask(${task.id})">
