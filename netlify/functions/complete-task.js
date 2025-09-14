@@ -1,3 +1,4 @@
+// netlify/functions/complete-task.js
 const { createClient } = require('@supabase/supabase-js');
 
 exports.handler = async function(event, context) {
@@ -28,23 +29,7 @@ exports.handler = async function(event, context) {
   try {
     const { taskId, userId } = event.queryStringParameters;
     
-    // Convert userId to number (BIGINT)
-    const userIdNumber = parseInt(userId);
-    if (isNaN(userIdNumber)) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'text/html'
-        },
-        body: `
-          <html><body>
-            <h2>Error: Invalid User ID</h2>
-            <p>User ID must be a number</p>
-          </body></html>
-        `
-      };
-    }
+    console.log('Received completion request:', { taskId, userId });
     
     if (!taskId || !userId) {
       return {
@@ -57,6 +42,28 @@ exports.handler = async function(event, context) {
           <html><body>
             <h2>Error: Missing Parameters</h2>
             <p>Task ID or User ID missing from URL</p>
+            <p>Received: taskId=${taskId}, userId=${userId}</p>
+          </body></html>
+        `
+      };
+    }
+
+    // Convert to numbers
+    const userIdNumber = parseInt(userId);
+    const taskIdNumber = parseInt(taskId);
+    
+    if (isNaN(userIdNumber) || isNaN(taskIdNumber)) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'text/html'
+        },
+        body: `
+          <html><body>
+            <h2>Error: Invalid Parameters</h2>
+            <p>User ID and Task ID must be numbers</p>
+            <p>Received: userId=${userId} (parsed: ${userIdNumber}), taskId=${taskId} (parsed: ${taskIdNumber})</p>
           </body></html>
         `
       };
@@ -67,12 +74,17 @@ exports.handler = async function(event, context) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 1. Check if user already completed this task
-    const { data: existingCompletion } = await supabase
+    const { data: existingCompletion, error: checkError } = await supabase
       .from('task_completions')
       .select()
       .eq('user_id', userIdNumber)
-      .eq('task_id', taskId)
+      .eq('task_id', taskIdNumber)
       .single();
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Error checking existing completion:', checkError);
+      throw checkError;
+    }
 
     if (existingCompletion) {
       return {
@@ -94,10 +106,11 @@ exports.handler = async function(event, context) {
     const { data: task, error: taskError } = await supabase
       .from('tasks')
       .select('reward, title')
-      .eq('id', taskId)
+      .eq('id', taskIdNumber)
       .single();
 
     if (taskError || !task) {
+      console.error('Task not found:', taskError);
       throw new Error('Task not found');
     }
 
@@ -106,11 +119,12 @@ exports.handler = async function(event, context) {
       .from('task_completions')
       .insert({
         user_id: userIdNumber,
-        task_id: parseInt(taskId),
+        task_id: taskIdNumber,
         amount_earned: task.reward
       });
 
     if (completionError) {
+      console.error('Error recording completion:', completionError);
       throw completionError;
     }
 
@@ -142,6 +156,7 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
+    console.error('Unexpected error in complete-task:', error);
     return {
       statusCode: 500,
       headers: {
@@ -152,6 +167,7 @@ exports.handler = async function(event, context) {
         <html><body>
           <h2>Error</h2>
           <p>Something went wrong: ${error.message}</p>
+          <p>Please try again or contact support.</p>
         </body></html>
       `
     };
