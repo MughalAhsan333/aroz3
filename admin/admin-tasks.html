@@ -513,19 +513,13 @@
         }
 
         // --- Task Form Functions ---
-        function setupFormSubmit() {
-            document.getElementById('taskForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                await saveTask();
-            });
-        }
-
         function showAddTaskModal() {
             isEditMode = false;
             currentEditTaskId = null;
-            document.getElementById('taskFormTitle').textContent = 'Add New Task';
+            document.getElementById('taskFormTitle').textContent = 'Add New Task - Step 1/2';
             resetTaskForm();
             showModal('taskFormModal');
+            showStep1(); // Start with step 1
         }
 
         function editTask(taskId) {
@@ -534,33 +528,42 @@
                 isEditMode = true;
                 currentEditTaskId = taskId;
                 document.getElementById('taskFormTitle').textContent = 'Edit Task';
+                
+                // Fill step 1 fields
                 document.getElementById('taskTitle').value = task.title;
                 document.getElementById('taskDescription').value = task.description || '';
                 document.getElementById('taskReward').value = task.reward || '';
                 document.getElementById('taskStatus').value = task.status || 'active';
                 document.getElementById('taskDifficulty').value = task.difficulty || '';
-                document.getElementById('taskCompletionLink').value = task.completion_link || '';
+                
+                // For editing, we'll use single-step form with existing link
                 showModal('taskFormModal');
+                showStep1();
             }
         }
 
         function resetTaskForm() {
-            document.getElementById('taskForm').reset();
+            document.getElementById('taskFormStep1').reset();
+            document.getElementById('finalTaskLink').value = '';
+            currentTaskData = {};
             isEditMode = false;
             currentEditTaskId = null;
+            showStep1();
         }
 
         async function saveTask() {
-            const taskData = {
-                title: document.getElementById('taskTitle').value,
-                description: document.getElementById('taskDescription').value,
-                reward: parseFloat(document.getElementById('taskReward').value),
-                status: document.getElementById('taskStatus').value,
-                difficulty: document.getElementById('taskDifficulty').value,
-                completion_link: document.getElementById('taskCompletionLink').value
-            };
-
             try {
+                const taskLink = document.getElementById('finalTaskLink').value;
+                if (!taskLink) {
+                    showError('Please paste the shortened task link');
+                    return;
+                }
+
+                const taskData = {
+                    ...currentTaskData,
+                    completion_link: taskLink
+                };
+
                 const url = isEditMode 
                     ? `/.netlify/functions/update-task` 
                     : `/.netlify/functions/create-task`;
