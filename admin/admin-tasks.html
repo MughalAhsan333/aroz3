@@ -397,7 +397,7 @@ function showStep2() {
 
     // For EDIT mode - we have the actual task ID
     if (isEditMode && currentEditTaskId) {
-        const completionLink = `https://aroz5.netlify.app/.netlify/functions/complete-task?taskId=${currentEditTaskId}&userId=USER_ID`;
+        const completionLink = `https://aroz5.netlify.app/.netlify/functions/complete-task-manually?taskId=${currentEditTaskId}&userId=USER_ID`;
         document.getElementById('generatedCompletionLink').value = completionLink;
     } else {
         // For NEW tasks - use placeholder, you'll edit after creation
