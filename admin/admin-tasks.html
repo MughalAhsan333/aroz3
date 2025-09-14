@@ -408,6 +408,12 @@
                     <td>₹${task.reward || '0'}</td>
                     <td><span class="status-badge">${task.status || 'active'}</span></td>
                     <td>${task.difficulty || 'Not set'}</td>
+                    <td>
+                ${task.completion_link ? 
+                    `<a href="${task.completion_link}" target="_blank" style="font-size: 12px;">View Link</a>` : 
+                    'Not set'
+                }
+            </td>
                     <td>${new Date(task.created_at).toLocaleDateString()}</td>
                     <td>
                         <button class="action-btn edit-btn" onclick="editTask(${task.id})">
