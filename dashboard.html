@@ -304,49 +304,61 @@
 
         // Load tasks from Supabase
         async function loadTasks() {
-            try {
-                const response = await fetch('/.netlify/functions/get-all-tasks');
-                const result = await response.json();
+    try {
+        const [tasksResponse, completionsResponse] = await Promise.all([
+            fetch('/.netlify/functions/get-all-tasks'),
+            fetch(`/.netlify/functions/get-user-completions?userId=${currentUserId}`)
+        ]);
 
-                const taskListContainer = document.getElementById('taskListContainer');
-                
-                if (result.success && result.data.length > 0) {
-                    // Clear loading message
-                    taskListContainer.innerHTML = '';
-                    
-                    // Display tasks from database
-                    result.data.forEach(task => {
-                        if (task.status === 'active') {
-                            const taskCard = document.createElement('div');
-                            taskCard.className = 'task-card';
-                            taskCard.innerHTML = `
-                                <h3>${task.title}</h3>
-                                <p>${task.description || 'No description available'}</p>
-                                <span class="task-reward">₹${task.reward || '0'}</span>
-                                ${task.difficulty ? `<span class="task-difficulty">${task.difficulty}</span>` : ''}
-                                
-                                ${task.completion_link ? 
-                                    `<button class="task-btn" onclick="startTask(${task.id}, '${task.completion_link}')">Start Task</button>` :
-                                    `<button class="task-complete-btn" onclick="completeTaskManually(${task.id})">Mark as Completed</button>`
-                                }
-                            `;
-                            taskListContainer.appendChild(taskCard);
+        const tasksResult = await tasksResponse.json();
+        const completionsResult = await completionsResponse.json();
+
+        const taskListContainer = document.getElementById('taskListContainer');
+        
+        if (tasksResult.success && tasksResult.data.length > 0) {
+            // Clear loading message
+            taskListContainer.innerHTML = '';
+            
+            const completedTaskIds = completionsResult.success ? 
+                completionsResult.data.map(comp => comp.task_id) : [];
+
+            // Display tasks from database
+            tasksResult.data.forEach(task => {
+                if (task.status === 'active') {
+                    const isCompleted = completedTaskIds.includes(task.id);
+                    const taskCard = document.createElement('div');
+                    taskCard.className = 'task-card';
+                    taskCard.innerHTML = `
+                        <h3>${task.title}</h3>
+                        <p>${task.description || 'No description available'}</p>
+                        <span class="task-reward">₹${task.reward || '0'}</span>
+                        ${task.difficulty ? `<span class="task-difficulty">${task.difficulty}</span>` : ''}
+                        
+                        ${isCompleted ? 
+                            `<button class="task-complete-btn" style="background: #9ca3af; cursor: not-allowed;" disabled>
+                                <i class="fas fa-check-circle"></i> Completed
+                            </button>` :
+                            `<button class="task-btn" onclick="startTask(${task.id}, '${task.completion_link || ''}')">
+                                Start Task
+                            </button>`
                         }
-                    });
-                    
-                    if (taskListContainer.children.length === 0) {
-                        taskListContainer.innerHTML = '<p>No active tasks available at the moment.</p>';
-                    }
-                } else {
-                    taskListContainer.innerHTML = '<p>No tasks available. Please check back later.</p>';
+                    `;
+                    taskListContainer.appendChild(taskCard);
                 }
-            } catch (error) {
-                console.error('Error loading tasks:', error);
-                document.getElementById('taskListContainer').innerHTML = 
-                    '<p>Error loading tasks. Please try again later.</p>';
+            });
+            
+            if (taskListContainer.children.length === 0) {
+                taskListContainer.innerHTML = '<p>No active tasks available at the moment.</p>';
             }
+        } else {
+            taskListContainer.innerHTML = '<p>No tasks available. Please check back later.</p>';
         }
-
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+        document.getElementById('taskListContainer').innerHTML = 
+            '<p>Error loading tasks. Please try again later.</p>';
+    }
+}
         // Start task function - goes to external URL shortener
         function startTask(taskId, completionLink) {
             if (!completionLink) {
@@ -472,3 +484,4 @@
     </script>
 </body>
 </html>
+
