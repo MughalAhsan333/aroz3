@@ -1,487 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Aroz</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        .task-difficulty {
-            display: inline-block;
-            padding: 4px 8px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-        .loading-tasks {
-            text-align: center;
-            padding: 2rem;
-            color: #6b7280;
-        }
-        .task-complete-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .task-complete-btn:hover {
-            background: #059669;
-        }
-        .task-complete-btn:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-    </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <nav class="dashboard-nav">
-        <a href="/" class="logo"><i class="fas fa-rocket"></i>Aroz</a>
-        
-        <div class="nav-right">
-            <div class="user-dropdown-container">
-                <button class="user-menu-btn" id="userMenuBtn">
-                    <img src="https://www.pngkey.com/png/full/72-729716_user-avatar-png-graphic-free-download-icon.png" alt="User" class="user-avatar">
-                    <span id="userGreeting">Hi User!</span>
-                    <i class="fas fa-chevron-down" style="margin-left: 8px; font-size: 12px;"></i>
-                </button>
-                <div class="user-dropdown-content" id="userDropdown">
-                    <div class="user-info">
-                        <img src="https://www.pngkey.com/png/full/72-729716_user-avatar-png-graphic-free-download-icon.png" alt="User" class="user-avatar">
-                        <div>
-                            <p class="user-name" id="dropdownUserName">User Name</p>
-                            <p class="user-email" id="dropdownUserEmail">user@example.com</p>
-                        </div>
-                    </div>
-                    <hr>
-                    <a href="#personal-info" class="dropdown-link" onclick="showSection('personal-info'); hideDropdown()">
-                        <i class="fas fa-user"></i> Personal Information
-                    </a>
-                    <a href="#earnings" class="dropdown-link" onclick="showSection('earnings'); hideDropdown()">
-                        <i class="fas fa-money-bill-wave"></i> Earnings
-                    </a>
-                    <a href="#task-history" class="dropdown-link" onclick="showSection('task-history'); hideDropdown()">
-                        <i class="fas fa-history"></i> Task History
-                    </a>
-                    <hr>
-                    <a href="#" class="dropdown-link" onclick="logout(); hideDropdown()">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
+// netlify/functions/get-transactions.js
+const { createClient } = require('@supabase/supabase-js');
 
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-menu">
-                <a href="#overview" class="sidebar-link active" onclick="showSection('overview')">
-                    <i class="fas fa-chart-pie"></i> Overview
-                </a>
-                <a href="#tasks" class="sidebar-link" onclick="showSection('tasks')">
-                    <i class="fas fa-tasks"></i> Available Tasks
-                </a>
-                <a href="#earnings" class="sidebar-link" onclick="showSection('earnings')">
-                    <i class="fas fa-wallet"></i> My Earnings
-                </a>
-                <a href="#referral" class="sidebar-link" onclick="showSection('referral')">
-                    <i class="fas fa-users"></i> Refer & Earn
-                </a>
-                <a href="#settings" class="sidebar-link" onclick="showSection('settings')">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
-            </div>
-        </aside>
+exports.handler = async function(event, context) {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS'
+      },
+      body: JSON.stringify({ message: 'CORS preflight successful' })
+    };
+  }
 
-        <!-- Main Content Area -->
-        <main class="dashboard-main">
-            <div id="overview" class="content-section active">
-                <h2>Welcome, <span id="overviewUserName">User</span>!</h2>
-                <p class="welcome-text">Start completing tasks to earn money. Your dashboard is currently empty because you haven't completed any tasks yet.</p>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <i class="fas fa-wallet"></i>
-                        <h3 id="totalEarnings">₹ 0.00</h3>
-                        <p>Total Earnings</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-check-circle"></i>
-                        <h3 id="completedTasks">0</h3>
-                        <p>Tasks Completed</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-clock"></i>
-                        <h3 id="pendingTasks">0</h3>
-                        <p>Pending Tasks</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-users"></i>
-                        <h3 id="totalReferrals">0</h3>
-                        <p>Referrals</p>
-                    </div>
-                </div>
-            </div>
+  if (event.httpMethod !== 'GET') {
+    return { 
+      statusCode: 405, 
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ 
+        success: false,
+        error: 'Method Not Allowed' 
+      }) 
+    };
+  }
 
-            <div id="tasks" class="content-section">
-                <h2>Available Tasks</h2>
-                <p>Complete these tasks to start earning money:</p>
-                <div class="task-list" id="taskListContainer">
-                    <div class="loading-tasks">Loading tasks...</div>
-                    <!-- Tasks will be loaded dynamically here -->
-                </div>
-            </div>
-
-            <div id="earnings" class="content-section">
-                <h2>My Earnings</h2>
-                <div class="earnings-summary">
-                    <div class="earnings-stat">
-                        <h3>Total Earned: <span id="earningsTotal">₹0.00</span></h3>
-                        <p>Available for withdrawal: <span id="earningsAvailable">₹0.00</span></p>
-                    </div>
-                </div>
-                <div class="transactions">
-                    <h3>Transaction History</h3>
-                    <p id="noTransactionsMessage">You haven't made any transactions yet.</p>
-                    <table class="transactions-table" style="display: none;">
-                        <tr>
-                            <th>Date</th>
-                            <th>Task</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                        <!-- Transactions will be added here dynamically -->
-                    </table>
-                </div>
-            </div>
-
-            <div id="referral" class="content-section">
-                <h2>Refer & Earn</h2>
-                <div class="referral-card">
-                    <i class="fas fa-gift"></i>
-                    <h3>Earn ₹100 for every friend who joins!</h3>
-                    <p>Share your referral link with friends and earn rewards when they sign up and complete their first task.</p>
-                    <div class="referral-link">
-                        <input type="text" id="referralLinkInput" value="Generating your link..." readonly>
-                        <button class="copy-btn" onclick="copyReferralLink()">Copy Link</button>
-                    </div>
-                    <div class="referral-stats">
-                        <p>People referred: <strong id="referralCount">0</strong></p>
-                        <p>Earned from referrals: <strong id="referralEarnings">₹0.00</strong></p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="settings" class="content-section">
-                <h2>Account Settings</h2>
-                <div class="settings-form">
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="settingsEmail" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Notification Preferences</label>
-                        <div class="checkbox-group">
-                            <label>
-                                <input type="checkbox" id="emailNotifications" checked> Email Notifications
-                            </label>
-                            <label>
-                                <input type="checkbox" id="taskAlerts" checked> Task Alerts
-                            </label>
-                        </div>
-                    </div>
-                    <button class="save-btn">Save Changes</button>
-                </div>
-            </div>
-
-            <div id="personal-info" class="content-section">
-                <h2>Personal Information</h2>
-                <div class="personal-info-form">
-                    <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" id="infoFirstName" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" id="infoLastName" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input type="email" id="infoEmail" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label>Member Since</label>
-                        <input type="text" id="memberSince" readonly>
-                    </div>
-                </div>
-            </div>
-
-            <div id="task-history" class="content-section">
-                <h2>Task History</h2>
-                <p id="noTasksMessage">You haven't completed any tasks yet.</p>
-                <div class="task-history-table" style="display: none;">
-                    <table>
-                        <tr>
-                            <th>Task</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Earnings</th>
-                        </tr>
-                        <!-- Task history will be added here dynamically -->
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script src="auth.js"></script>
-    <script>
-        // --- Global Variables ---
-        let currentUserId = null;
-
-        // Check if user is logged in when page loads
-        checkAuth();
-
-        // Load user data INTO dashboard FROM SUPABASE
-        async function loadUserData() {
-            try {
-                // Get user ID from URL parameters
-                const urlParams = new URLSearchParams(window.location.search);
-                const userId = urlParams.get('userId');
-                
-                if (!userId) {
-                    throw new Error("User ID not found in URL");
-                }
-
-                currentUserId = userId; // Store for later use
-
-                // Fetch FRESH user data from Supabase
-                const response = await fetch('/.netlify/functions/user-data?userId=' + userId);
-                const result = await response.json();
-
-                if (!result.success) {
-                    throw new Error(result.error || 'Failed to load user data');
-                }
-
-                const userData = result.data;
-
-                // Update UI with FRESH data from database
-                document.getElementById('userGreeting').textContent = 'Hi ' + userData.first_name + '!';
-                document.getElementById('dropdownUserName').textContent = userData.first_name + ' ' + userData.last_name;
-                document.getElementById('dropdownUserEmail').textContent = userData.email;
-                document.getElementById('overviewUserName').textContent = userData.first_name;
-                
-                // Update form fields
-                document.getElementById('infoFirstName').value = userData.first_name;
-                document.getElementById('infoLastName').value = userData.last_name;
-                document.getElementById('infoEmail').value = userData.email;
-                document.getElementById('settingsEmail').value = userData.email;
-                
-                // Set join date
-                const joinDate = new Date(userData.created_at).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'long', 
-                    year: 'numeric'
-                });
-                document.getElementById('memberSince').value = joinDate;
-                
-                // Generate personalized referral link
-                document.getElementById('referralLinkInput').value = 
-                    'https://aroz.com/signup?ref=' + userData.first_name + userData.last_name.substring(0, 3);
-
-            } catch (error) {
-                console.error('Failed to load user data:', error);
-                alert('Failed to load user data. Please log in again.');
-                logout();
-            }
-        }
-
-        // Load tasks from Supabase
-        async function loadTasks() {
-    try {
-        const [tasksResponse, completionsResponse] = await Promise.all([
-            fetch('/.netlify/functions/get-all-tasks'),
-            fetch(`/.netlify/functions/get-user-completions?userId=${currentUserId}`)
-        ]);
-
-        const tasksResult = await tasksResponse.json();
-        const completionsResult = await completionsResponse.json();
-
-        const taskListContainer = document.getElementById('taskListContainer');
-        
-        if (tasksResult.success && tasksResult.data.length > 0) {
-            // Clear loading message
-            taskListContainer.innerHTML = '';
-            
-            const completedTaskIds = completionsResult.success ? 
-                completionsResult.data.map(comp => comp.task_id) : [];
-
-            // Display tasks from database
-            tasksResult.data.forEach(task => {
-                if (task.status === 'active') {
-                    const isCompleted = completedTaskIds.includes(task.id);
-                    const taskCard = document.createElement('div');
-                    taskCard.className = 'task-card';
-                    taskCard.innerHTML = `
-                        <h3>${task.title}</h3>
-                        <p>${task.description || 'No description available'}</p>
-                        <span class="task-reward">₹${task.reward || '0'}</span>
-                        ${task.difficulty ? `<span class="task-difficulty">${task.difficulty}</span>` : ''}
-                        
-                        ${isCompleted ? 
-                            `<button class="task-complete-btn" style="background: #9ca3af; cursor: not-allowed;" disabled>
-                                <i class="fas fa-check-circle"></i> Completed
-                            </button>` :
-                            `<button class="task-btn" onclick="startTask(${task.id}, '${task.completion_link || ''}')">
-                                Start Task
-                            </button>`
-                        }
-                    `;
-                    taskListContainer.appendChild(taskCard);
-                }
-            });
-            
-            if (taskListContainer.children.length === 0) {
-                taskListContainer.innerHTML = '<p>No active tasks available at the moment.</p>';
-            }
-        } else {
-            taskListContainer.innerHTML = '<p>No tasks available. Please check back later.</p>';
-        }
-    } catch (error) {
-        console.error('Error loading tasks:', error);
-        document.getElementById('taskListContainer').innerHTML = 
-            '<p>Error loading tasks. Please try again later.</p>';
+  try {
+    const { userId } = event.queryStringParameters;
+    
+    if (!userId) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          success: false,
+          error: 'User ID is required' 
+        })
+      };
     }
-}
-        // Start task function - goes to external URL shortener
-        function startTask(taskId, completionLink) {
-            if (!completionLink) {
-                alert('This task is not properly configured. Please contact support.');
-                return;
-            }
-            
-            if (!currentUserId) {
-                alert('User not identified. Please log in again.');
-                return;
-            }
-            
-            // Replace USER_ID placeholder with actual user ID
-            const actualLink = completionLink.replace('USER_ID', currentUserId);
-            
-            // Redirect to the URL shortener
-            window.location.href = actualLink;
-        }
 
-        // Manual task completion function
-        async function completeTaskManually(taskId) {
-            if (!confirm('Mark this task as completed? You will receive ₹' + getTaskReward(taskId) + ' upon verification.')) {
-                return;
-            }
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-            try {
-                const response = await fetch('/.netlify/functions/complete-task-manually', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        taskId: taskId,
-                        userId: currentUserId
-                    })
-                });
+    const { data: transactions, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', parseInt(userId))
+      .order('created_at', { ascending: false });
 
-                const result = await response.json();
+    if (error) throw error;
 
-                if (result.success) {
-                    alert('Task marked as completed! Reward will be added after verification.');
-                    loadTasks(); // Reload tasks
-                    loadUserData(); // Refresh user stats
-                } else {
-                    alert('Error: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Error completing task:', error);
-                alert('Error completing task. Please try again.');
-            }
-        }
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        success: true,
+        data: transactions || []
+      })
+    };
 
-        // Helper function to get task reward (you'll need to implement this)
-        function getTaskReward(taskId) {
-            // This would normally fetch from your tasks data
-            return '50'; // Default reward
-        }
-
-        // Show/hide content sections
-        function showSection(sectionId) {
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            document.getElementById(sectionId).classList.add('active');
-            
-            const correspondingLink = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
-            if (correspondingLink) {
-                correspondingLink.classList.add('active');
-            }
-
-            if (sectionId === 'tasks') {
-                loadTasks();
-            }
-        }
-
-        // Show/hide user dropdown
-        function toggleDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        function hideDropdown() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.remove('show');
-        }
-
-        // Copy referral link function
-        function copyReferralLink() {
-            const linkInput = document.getElementById('referralLinkInput');
-            linkInput.select();
-            document.execCommand('copy');
-            alert('Referral link copied to clipboard!');
-        }
-
-        // Close dropdown when clicking outside
-        function setupDropdownClose() {
-            document.addEventListener('click', function(event) {
-                const dropdown = document.getElementById('userDropdown');
-                const button = document.getElementById('userMenuBtn');
-                
-                if (!button.contains(event.target) && !dropdown.contains(event.target)) {
-                    dropdown.classList.remove('show');
-                }
-            });
-        }
-
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            loadUserData();
-            loadTasks();
-            setupDropdownClose();
-            
-            document.getElementById('userMenuBtn').addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleDropdown();
-            });
-        });
-    </script>
-</body>
-</html>
-
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        success: false,
+        error: error.message 
+      })
+    };
+  }
+};
