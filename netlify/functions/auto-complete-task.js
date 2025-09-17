@@ -114,7 +114,24 @@ exports.handler = async function(event, context) {
     if (completionError) {
       throw completionError;
     }
+// Add reward to user balance
+const rewardResponse = await fetch('/.netlify/functions/add-reward', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        userId: userIdNumber,
+        amount: task.reward,
+        taskId: taskIdNumber,
+        description: `Reward for completing task: ${task.title}`
+    })
+});
 
+const rewardResult = await rewardResponse.json();
+if (!rewardResult.success) {
+    console.error('Failed to add reward:', rewardResult.error);
+}
     // 4. SUCCESS - Show completion page
     return {
       statusCode: 200,
